@@ -7,3 +7,5 @@
 %%% Created : 06. Sep 2023 16:52
 %%%-------------------------------------------------------------------
 -author("phucnguyen").
+-record(message, {sender, receiver, text =  ""}
+).
