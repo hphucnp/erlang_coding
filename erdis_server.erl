@@ -11,6 +11,7 @@
 
 %% API
 -export([start_server/0, stop_server/0]).
+-export([get_value/1, set_value/2, get_size/0, get_all_keys/0, delete/1, exists/1]).
 
 -record(entry, {key, value}).
 
@@ -21,7 +22,7 @@ initialize_db() ->
 
 start_server() ->
   initialize_db(),
-  {ok, Listen} = gen_tcp:listen(10101, [binary, {packet, 4}, {reuseaddr, true}, {active, false}]),
+  {ok, Listen} = gen_tcp:listen(10101, [binary, {packet, 4}, {reuseaddr, true}, {active, true}]),
   spawn(fun() -> par_connect(Listen) end).
 
 par_connect(Listen) ->
@@ -56,10 +57,10 @@ process_command(Str) ->
     "get" -> get_value(lists:nth(2, Parts));
     "set" -> set_value(lists:nth(2, Parts), lists:nth(3, Parts));
     "size" -> get_size();
-    "keys" -> get_keys();
-    "delete" -> delete_value(lists:nth(2, Parts));
-    "exists" -> exists(lists:nth(2, Parts));
-  end
+    "keys" -> get_all_keys();
+    "delete" -> delete(lists:nth(2, Parts));
+    "exists" -> exists(lists:nth(2, Parts))
+  end.
 
 get_value(Key) ->
   F = fun() ->
@@ -86,16 +87,16 @@ get_size() ->
       end,
   {ok, mnesia:transaction(F)}.
 
-get_keys() ->
+get_all_keys() ->
   F = fun() ->
     mnesia:all_keys(entry)
       end,
   {ok, mnesia:transaction(F)}.
 
-delete_value(Key) ->
+delete(Key) ->
   Oid = {entry, Key},
   F = fun() ->
-    mnesia:delete(Oid)
+        mnesia:delete(Oid)
       end,
   mnesia:transaction(F),
   {ok, Key}.
@@ -104,6 +105,6 @@ exists(Key)->
   Exists = get_value(Key),
   case Exists of
     {atomic, does_not_exist} -> {ok, false};
-    _ -> {ok, true}
+    {atomic, _} -> {ok, true}
   end.
 

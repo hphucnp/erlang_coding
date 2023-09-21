@@ -39,5 +39,10 @@ client_keys() ->
   Command = "keys",
   client_eval(Command).
 
+client_delete(Key) ->
+  Command = io_lib:format("delete ~s", [Key]),
+  client_eval(Command).
 
-
+client_exists(Key) ->
+  Command = io_lib:format("exists ~s", [Key]),
+  client_eval(Command).
